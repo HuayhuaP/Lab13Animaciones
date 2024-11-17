@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,47 +46,44 @@ import androidx.compose.runtime.mutableStateOf
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge() // Habilita el modo edge-to-edge para pantallas modernas
         setContent {
             Lab13Theme {
-                Scaffold { innerPadding ->
-                    AnimatedVisibilityExample()
-                }
+                AnimatedColorBox()
             }
         }
     }
 }
 
 @Composable
-fun AnimatedVisibilityExample() {
-    var isVisible by remember { mutableStateOf(false) } // Controla la visibilidad
+fun AnimatedColorBox() {
+    // Estado para alternar el color
+    val isGreen = remember { mutableStateOf(false) }
 
+    // Animación de color con especificaciones configurables
+    val backgroundColor = animateColorAsState(
+        targetValue = if (isGreen.value) Color.Green else Color.Blue,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ) // Puedes cambiar esto a `tween` para probar
+    )
+
+    // Contenido de la interfaz
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = { isVisible = !isVisible }) { // Alterna el estado de visibilidad
-            Text("Toggle Visibility")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp)) // Espaciado entre el botón y la animación
-
-        // Animación de visibilidad
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
+        Box(
+            modifier = Modifier
+                .size(150.dp)
+                .background(backgroundColor.value) // Uso del color animado
+        )
+        Button(
+            onClick = { isGreen.value = !isGreen.value },
+            modifier = Modifier.padding(top = 16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.Blue)
-            )
+            Text("Change Color")
         }
     }
 }
-
-
