@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -14,6 +16,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.with
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,53 +47,66 @@ import androidx.compose.runtime.mutableStateOf
 
 
 
-
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Lab13Theme {
-                AnimatedSizeAndPositionBox()
+                AnimatedContentExample()
             }
         }
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AnimatedSizeAndPositionBox() {
-    // Estados para la posición y el tamaño
-    val isExpanded = remember { mutableStateOf(false) }
+fun AnimatedContentExample() {
+    // Estado que representa el estado actual (Cargando, Contenido, Error)
+    val currentState = remember { mutableStateOf(State.Loading) }
 
-    // Tamaño animado
-    val boxSize = animateDpAsState(
-        targetValue = if (isExpanded.value) 150.dp else 100.dp,
-        animationSpec = tween(durationMillis = 500)
-    )
+    // Efectos de entrada y salida personalizados con fadeIn y fadeOut
+    val enterTransition = fadeIn(animationSpec = tween(durationMillis = 500))
+    val exitTransition = fadeOut(animationSpec = tween(durationMillis = 500))
 
-    // Offset animado
-    val boxOffset = animateDpAsState(
-        targetValue = if (isExpanded.value) 100.dp else 0.dp,
-        animationSpec = tween(durationMillis = 500)
-    )
-
-    // UI
+    // UI con un botón para cambiar de estado
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(boxSize.value)
-                .offset(x = boxOffset.value, y = boxOffset.value) // Posición animada
-                .background(Color.Blue)
-        )
-        Button(
-            onClick = { isExpanded.value = !isExpanded.value },
-            modifier = Modifier.padding(top = 16.dp)
-        ) {
-            Text("Animate Box")
+        AnimatedContent(
+            targetState = currentState.value,
+            transitionSpec = {
+                enterTransition with exitTransition
+            }
+        ) { state ->
+            when (state) {
+                State.Loading -> {
+                    Text("Cargando...", modifier = Modifier.fillMaxSize())
+                }
+                State.Content -> {
+                    Text("Contenido cargado correctamente", modifier = Modifier.fillMaxSize())
+                }
+                State.Error -> {
+                    Text("Ocurrió un error", modifier = Modifier.fillMaxSize())
+                }
+            }
+        }
+
+        // Botón para alternar entre los estados
+        Button(onClick = {
+            currentState.value = when (currentState.value) {
+                State.Loading -> State.Content
+                State.Content -> State.Error
+                State.Error -> State.Loading
+            }
+        }) {
+            Text("Cambiar Estado")
         }
     }
+}
+
+// Enum para representar los tres estados
+enum class State {
+    Loading, Content, Error
 }
