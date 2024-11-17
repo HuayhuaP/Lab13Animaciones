@@ -7,7 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -48,27 +51,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Lab13Theme {
-                AnimatedColorBox()
+                AnimatedSizeAndPositionBox()
             }
         }
     }
 }
 
 @Composable
-fun AnimatedColorBox() {
-    // Estado para alternar el color
-    val isGreen = remember { mutableStateOf(false) }
+fun AnimatedSizeAndPositionBox() {
+    // Estados para la posición y el tamaño
+    val isExpanded = remember { mutableStateOf(false) }
 
-    // Animación de color con especificaciones configurables
-    val backgroundColor = animateColorAsState(
-        targetValue = if (isGreen.value) Color.Green else Color.Blue,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ) // Puedes cambiar esto a `tween` para probar
+    // Tamaño animado
+    val boxSize = animateDpAsState(
+        targetValue = if (isExpanded.value) 150.dp else 100.dp,
+        animationSpec = tween(durationMillis = 500)
     )
 
-    // Contenido de la interfaz
+    // Offset animado
+    val boxOffset = animateDpAsState(
+        targetValue = if (isExpanded.value) 100.dp else 0.dp,
+        animationSpec = tween(durationMillis = 500)
+    )
+
+    // UI
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -76,14 +82,15 @@ fun AnimatedColorBox() {
     ) {
         Box(
             modifier = Modifier
-                .size(150.dp)
-                .background(backgroundColor.value) // Uso del color animado
+                .size(boxSize.value)
+                .offset(x = boxOffset.value, y = boxOffset.value) // Posición animada
+                .background(Color.Blue)
         )
         Button(
-            onClick = { isGreen.value = !isGreen.value },
+            onClick = { isExpanded.value = !isExpanded.value },
             modifier = Modifier.padding(top = 16.dp)
         ) {
-            Text("Change Color")
+            Text("Animate Box")
         }
     }
 }
